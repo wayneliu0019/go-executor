@@ -265,7 +265,7 @@ func (e *Executor) handleLaunch(ev *executor.Event) error {
 	fmt.Println("image pulled!")
 
 	fmt.Println("startup continerd container")
-	c2 := "ctr run  docker.io/library/nginx:latest myng"
+	c2 := "ctr run -d docker.io/library/nginx:latest myng"
 	cmd2 := exec.Command("/bin/bash", "-c", c2)
 	_, errr := cmd2.Output()
 	if errr != nil {

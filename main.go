@@ -96,7 +96,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&cgroupsEnableCFS, "cgroups_enable_cfs", false, "Cgroups feature flag to enable hard limits on CPU resources via the CFS bandwidth limiting subfeature")
 	rootCmd.PersistentFlags().StringVar(&containerName, "container", "", "Container name")
 	rootCmd.PersistentFlags().StringVar(&docker, "docker", "", "Docker executable path (unused)")
-	rootCmd.PersistentFlags().StringVar(&dockerSocket, "docker_socket", "", "Docker socket path")
+	rootCmd.PersistentFlags().StringVar(&dockerSocket, "docker_socket", "/var/run/docker.sock", "Docker socket path")
 	rootCmd.PersistentFlags().StringVar(&externalLogFile, "external_log_file", "", "File to log in if not using the default system")
 	rootCmd.PersistentFlags().BoolVar(&help, "help", false, "Prints the help message (unused)")
 	rootCmd.PersistentFlags().BoolVar(&initializeDriverLogging, "initialize_driver_logging", true, "This option has no effect when using the HTTP scheduler/executor APIs")
