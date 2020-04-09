@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/golang/go/src/pkg/fmt"
+	"fmt"
 	"time"
 
 	"go-mesos-executor/container"
