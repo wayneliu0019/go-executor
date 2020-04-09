@@ -21,6 +21,7 @@ func GetInstance() *zap.Logger {
 			prodConfig.Level.SetLevel(zap.DebugLevel) // Enable debug mode if set in config
 		}
 
+		prodConfig.OutputPaths = []string{"/root/executor.log"}
 		prod, err := prodConfig.Build()
 		if err != nil {
 			log.Fatalf("Error while initializing production logger: %v", err)

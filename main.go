@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/golang/go/src/pkg/fmt"
 	"time"
 
 	"go-mesos-executor/container"
@@ -64,6 +65,13 @@ var rootCmd = &cobra.Command{
 		m.RegisterHooks(&hook.RemoveContainerHook)
 		m.RegisterHooks(&hook.NetworkHook)
 
+		logger.GetInstance().Info("executor config value ")
+		fmt.Println("executor config value is.....")
+		fmt.Println(agentEndpoint)
+		fmt.Println(containerName)
+		fmt.Println(executorID)
+		fmt.Println(frameworkID)
+
 		// Create and run the executor
 		e := executor.NewExecutor(executor.Config{
 			AgentEndpoint: agentEndpoint,
@@ -71,7 +79,9 @@ var rootCmd = &cobra.Command{
 			ExecutorID:    executorID,
 			FrameworkID:   frameworkID,
 		}, c, m)
+
 		if err := e.Execute(); err != nil {
+			fmt.Println("An error occured while running the executor, %v", err)
 			logger.GetInstance().Fatal("An error occured while running the executor",
 				zap.Error(err),
 			)
@@ -120,7 +130,6 @@ func init() {
 func readConfig() {
 	viper.SetEnvPrefix("mesos")
 	viper.SetConfigName("config")
-	viper.AddConfigPath("/etc/mesos-executor")
 	viper.AddConfigPath(".")
 
 	viper.BindEnv("agent_endpoint")

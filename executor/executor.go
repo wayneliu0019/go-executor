@@ -99,6 +99,7 @@ func getCPUSharesLimit(task mesos.TaskInfo) (uint64, error) {
 func NewExecutor(config Config, containerizer container.Containerizer, hookManager *hook.Manager) *Executor {
 	var e *Executor
 
+	fmt.Println("create new executor instance...")
 	apiURL := url.URL{
 		Scheme: "http",
 		Host:   config.AgentEndpoint,
@@ -165,6 +166,7 @@ func (e *Executor) Execute() error {
 
 		// If there's an error we go back to start of the loop and try registering again
 		if err != nil {
+			fmt.Println("Failed to register to the agent, error is %v", err)
 			registerDelay := viper.GetDuration("registering_retry")
 			logger.GetInstance().Warn(fmt.Sprintf(
 				"Failed to register to the agent. Will retry after %s",
