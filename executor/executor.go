@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"fmt"
 	"io"
 	"net/url"
 	"os"
@@ -10,6 +9,7 @@ import (
 	"sync"
 	"syscall"
 	"time"
+	"fmt"
 
 	"github.com/spf13/viper"
 	"go-mesos-executor/container"
@@ -94,7 +94,6 @@ func getCPUSharesLimit(task mesos.TaskInfo) (uint64, error) {
 func NewExecutor(config  config.Config, containerizer container.Containerizer, hookManager *hook.Manager) *Executor {
 	var e *Executor
 
-	fmt.Println("create new executor instance...")
 	apiURL := url.URL{
 		Scheme: "http",
 		Host:   config.AgentEndpoint,
@@ -110,7 +109,7 @@ func NewExecutor(config  config.Config, containerizer container.Containerizer, h
 	e = &Executor{
 		Cli:            cli,
 		Containerizer:  containerizer,
-                Config:         config,
+		Config:         config,
 		FrameworkInfo:  mesos.FrameworkInfo{},
 		HookManager:    hookManager,
 		Shutdown:       false,
@@ -159,13 +158,9 @@ func (e *Executor) Execute() error {
 
 		// If there's an error we go back to start of the loop and try registering again
 		if err != nil {
-			logger.GetInstance().Error("Failed to register to the agent: " + err.Error(), zap.Error(err))
-			fmt.Println("Failed to register to the agent, error is %v", err)
+			logger.GetInstance().Error(fmt.Sprintf("Failed to register to the agent: %v" , err), zap.Error(err))
 			registerDelay := viper.GetDuration("registering_retry")
-			logger.GetInstance().Warn(fmt.Sprintf(
-				"Failed to register to the agent. Will retry after %s",
-				registerDelay.String(),
-			))
+			logger.GetInstance().Warn(fmt.Sprintf("Failed to register to the agent. Will retry after %s", registerDelay.String(), ))
 			<-time.After(registerDelay)
 			continue
 		}
@@ -205,7 +200,7 @@ func (e *Executor) Execute() error {
 // handleSubscribed handles subscribed events
 func (e *Executor) handleSubscribed(ev *executor.Event) error {
 	logger.GetInstance().Info("Handled SUBSCRIBED event")
-	fmt.Println("substribe event is %v", ev)
+	logger.GetInstance().Info(fmt.Sprintf("substribe event is %v", ev))
 
 	e.AgentInfo = ev.GetSubscribed().GetAgentInfo()
 	e.ExecutorInfo = ev.GetSubscribed().GetExecutorInfo()
@@ -219,8 +214,7 @@ func (e *Executor) handleLaunch(ev *executor.Event) error {
 	logger.GetInstance().Info("Handled LAUNCH event")
 	e.TaskInfo = ev.GetLaunch().GetTask()
 
-	fmt.Println("launch event is %v", ev)
-	logger.GetInstance().Info(ev.String())
+	logger.GetInstance().Info(fmt.Sprintf("launch event is %v", ev))
 	logger.GetInstance().Debug("Launching a task",
 		zap.Reflect("task", e.TaskInfo),
 	)
@@ -243,35 +237,34 @@ func (e *Executor) handleLaunch(ev *executor.Event) error {
 		Name:           e.TaskInfo.Name,
 		TaskInfo:       e.TaskInfo,
 	}
+
 	//
 	//err = e.HookManager.RunPreCreateHooks(e.Containerizer, &e.TaskInfo, &e.FrameworkInfo)
 	//if err != nil {
 	//	return e.throwError(fmt.Errorf("error while running pre-create hooks: %v", err))
 	//}
 
-	fmt.Printf("container info is %v \n", info)
-
-	fmt.Println("pull images for containerd")
+	logger.GetInstance().Info(fmt.Sprintf("pull images for containerd %v", info))
 	c1 := "ctr images pull docker.io/library/nginx:latest"
 	cmd := exec.Command("/bin/bash", "-c", c1)
 	_, errcommand := cmd.Output()
 	if errcommand != nil {
-		fmt.Println("pull images error %v ", errcommand)
+		logger.GetInstance().Info(fmt.Sprintf("pull images error %v ", errcommand))
 		return errcommand
 	}
 
-	fmt.Println("image pulled!")
+	logger.GetInstance().Info("image pulled!")
 
-	fmt.Println("startup containerd container")
+	logger.GetInstance().Info("startup containerd container")
 	c2 := "ctr run -d docker.io/library/nginx:latest myng"
 	cmd2 := exec.Command("/bin/bash", "-c", c2)
 	_, errr := cmd2.Output()
 	if errr != nil {
-		fmt.Println("run container error %v ", errr)
+		logger.GetInstance().Info(fmt.Sprintf("run container error %v ", errr))
 		return errr
 	}
 
-	fmt.Println("container created!")
+	logger.GetInstance().Info("container created!")
 
 	// Create container
 	//containerID, err := e.Containerizer.ContainerCreate(info)
@@ -329,7 +322,7 @@ func (e *Executor) handleLaunch(ev *executor.Event) error {
 func (e *Executor) handleKill(ev *executor.Event) error {
 	logger.GetInstance().Info("Handled KILL event")
 
-	fmt.Println("KILL event is %v", ev)
+	logger.GetInstance().Info(fmt.Sprintf("KILL event is %v", ev))
 	e.Shutdown = true
 	e.tearDown()
 	status := e.newStatus()
@@ -341,7 +334,7 @@ func (e *Executor) handleKill(ev *executor.Event) error {
 // handleAcknowledged removes the given task/update from unacked
 func (e *Executor) handleAcknowledged(ev *executor.Event) error {
 	logger.GetInstance().Info("Handled ACKNOWLEDGED event")
-	fmt.Println("Acknowledged event is %v", ev)
+	logger.GetInstance().Info(fmt.Sprintf("Acknowledged event is %v", ev))
 
 	// Lock mutex
 	e.UnackedMutex.Lock()
@@ -359,8 +352,6 @@ func (e *Executor) handleMessage(ev *executor.Event) error {
 		zap.String("eventMessage", string(ev.GetMessage().GetData())),
 	)
 
-	fmt.Println("message event is %v", ev.GetMessage())
-
 	return nil
 }
 
@@ -368,7 +359,7 @@ func (e *Executor) handleMessage(ev *executor.Event) error {
 func (e *Executor) handleShutdown(ev *executor.Event) error {
 	logger.GetInstance().Info("Handled SHUTDOWN event")
 
-	fmt.Println("shutdown event is %v", ev)
+	logger.GetInstance().Info(fmt.Sprintf("shutdown event is %v", ev))
 
 	return e.handleKill(nil)
 }
@@ -397,12 +388,16 @@ func (e *Executor) getUnackedUpdates() []executor.Call_Update {
 
 // newStatus returns a mesos task status generated for the given executor and task ID
 func (e *Executor) newStatus() mesos.TaskStatus {
-	return mesos.TaskStatus{
+	status:= mesos.TaskStatus{
 		ExecutorID: &e.ExecutorInfo.ExecutorID,
 		Source:     mesos.SOURCE_EXECUTOR.Enum(),
 		TaskID:     e.TaskInfo.GetTaskID(),
 		UUID:       []byte(uuid.NewRandom()),
 	}
+
+	logger.GetInstance().Info(fmt.Sprintln("newstatus of task is %v", status))
+
+	return status
 }
 
 // updateStatus updates the current status of the given executor and adds the update to the
@@ -499,7 +494,7 @@ func (e *Executor) tearDown() {
 	cmd := exec.Command("/bin/bash", "-c", c1)
 	_, errcommand := cmd.Output()
 	if errcommand != nil {
-		fmt.Println("stop container error %v ", errcommand)
+		logger.GetInstance().Info(fmt.Sprintf("stop container error %v ", errcommand))
 		return
 	}
 

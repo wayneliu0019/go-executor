@@ -79,7 +79,7 @@ func init() {
 	rootCmd.PersistentFlags().Bool("debug", true, "Enable debug mode")
 	viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))
 
-	rootCmd.PersistentFlags().StringSlice("hooks", []string{}, "Enabled hooks")
+	rootCmd.PersistentFlags().StringSlice("hooks", []string{"ddfd"}, "Enabled hooks")
 	viper.BindPFlag("hooks", rootCmd.PersistentFlags().Lookup("hooks"))
 
 	rootCmd.PersistentFlags().String("proc_path", "/proc", "Proc mount path")
@@ -93,6 +93,8 @@ func init() {
 	viper.SetDefault("iptables.ip_forwarding", true)
 	viper.SetDefault("iptables.ip_masquerading", true)
 
+	hooks := viper.GetStringSlice("hooks")
+	logger.GetInstance().Info(fmt.Sprintf("at the end of init, hooks are %v", hooks))
 
 }
 
@@ -115,6 +117,9 @@ func readConfig() {
 			zap.Error(err),
 		)
 	}
+
+	hooks := viper.GetStringSlice("hooks")
+	logger.GetInstance().Info(fmt.Sprintf("readInConfig, hooks are %v", hooks))
 
 }
 
