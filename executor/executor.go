@@ -518,25 +518,30 @@ func (e *Executor) waitContainer() error {
 		zap.String("Task", e.TaskInfo.TaskID.GetValue()),
 	)
 
-	code, err := e.Containerizer.ContainerWait(e.ContainerID)
-	if err != nil {
-		logger.GetInstance().Error("Error while waiting for container to stop",
-			zap.String("Container", e.ContainerID),
-			zap.String("Task", e.TaskInfo.TaskID.GetValue()),
-			zap.Error(err),
-		)
+	//code, err := e.Containerizer.ContainerWait(e.ContainerID)
+	//if err != nil {
+	//	logger.GetInstance().Error("Error while waiting for container to stop",
+	//		zap.String("Container", e.ContainerID),
+	//		zap.String("Task", e.TaskInfo.TaskID.GetValue()),
+	//		zap.Error(err),
+	//	)
 
-		return e.throwError(fmt.Errorf("error while waiting for container to stop: %v", err))
-	}
+	//	return e.throwError(fmt.Errorf("error while waiting for container to stop: %v", err))
+	//}
 
-	logger.GetInstance().Info("Container exited",
-		zap.Int("Code", code),
-		zap.String("Container", e.ContainerID),
-		zap.String("Task", e.TaskInfo.TaskID.GetValue()),
-	)
+	//logger.GetInstance().Info("Container exited",
+	//	zap.Int("Code", code),
+	//	zap.String("Container", e.ContainerID),
+	//	zap.String("Task", e.TaskInfo.TaskID.GetValue()),
+	//)
 
-	if code != 0 {
-		return e.throwError(fmt.Errorf("container exited (code %d)", code))
+	//if code != 0 {
+	//	return e.throwError(fmt.Errorf("container exited (code %d)", code))
+	//}
+
+        for {
+            logger.GetInstance().Info("container wait process.....")
+            time.Sleep(10 * time.Second)
 	}
 
 	e.tearDown()
