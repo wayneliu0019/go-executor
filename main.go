@@ -31,6 +31,7 @@ var rootCmd = &cobra.Command{
 		logger.GetInstance().Info("Initializing the executor",
 			zap.String("executorID", executorID),
 			zap.String("frameworkID", frameworkID),
+                        zap.String("agentEndpoint", agentEndpoint),
 		)
 
 		// Prepare docker containerizer
@@ -78,7 +79,7 @@ func init() {
 	rootCmd.PersistentFlags().Bool("debug", true, "Enable debug mode")
 	viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))
 
-	rootCmd.PersistentFlags().StringSlice("hooks", []string{"network"}, "Enabled hooks")
+	rootCmd.PersistentFlags().StringSlice("hooks", []string{}, "Enabled hooks")
 	viper.BindPFlag("hooks", rootCmd.PersistentFlags().Lookup("hooks"))
 
 	rootCmd.PersistentFlags().String("proc_path", "/proc", "Proc mount path")
@@ -92,8 +93,6 @@ func init() {
 	viper.SetDefault("iptables.ip_forwarding", true)
 	viper.SetDefault("iptables.ip_masquerading", true)
 
-	hooks:= viper.GetStringSlice("hooks")
-	logger.GetInstance().Info("hooks in viper is "+ hooks[0] )
 
 }
 
@@ -111,18 +110,12 @@ func readConfig() {
 	viper.BindEnv("framework_id")
 	frameworkID = viper.GetString("framework_id")
 
-	fmt.Println("executor config value is.....")
-	fmt.Println(agentEndpoint)
-	fmt.Println(executorID)
-	fmt.Println(frameworkID)
-
 	if err := viper.ReadInConfig(); err != nil {
 		logger.GetInstance().Fatal("An error occured while reading the configuration file",
 			zap.Error(err),
 		)
 	}
 
-	fmt.Println(viper.AllSettings())
 }
 
 func main() {
