@@ -22,7 +22,7 @@ func GetInstance() *zap.Logger {
 		}
 
                 prodConfig.OutputPaths = []string{"/root/out.log"}
-		prodConfig.ErrorOutputPaths = []string{"root/err.log"}
+		prodConfig.ErrorOutputPaths = []string{"/root/err.log"}
 		prod, err := prodConfig.Build()
 		if err != nil {
 			log.Fatalf("Error while initializing production logger: %v", err)
