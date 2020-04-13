@@ -110,6 +110,7 @@ func NewExecutor(config  config.Config, containerizer container.Containerizer, h
 	e = &Executor{
 		Cli:            cli,
 		Containerizer:  containerizer,
+                Config:         config,
 		FrameworkInfo:  mesos.FrameworkInfo{},
 		HookManager:    hookManager,
 		Shutdown:       false,
