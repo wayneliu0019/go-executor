@@ -2,9 +2,8 @@ package container
 
 import (
 	"context"
-	"net"
-
 	"github.com/mesos/mesos-go/api/v1/lib"
+	"net"
 )
 
 // Containerizer represents a containerizing technology such as docker

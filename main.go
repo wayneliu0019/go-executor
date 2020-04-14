@@ -35,7 +35,8 @@ var rootCmd = &cobra.Command{
 		)
 
 		// Prepare docker containerizer
-		c, err := container.NewDockerContainerizer(dockerSocket)
+		//c, err := container.NewDockerContainerizer(dockerSocket)
+		c, err := container.NewContainerdContainerizer(dockerSocket)
 		if err != nil {
 			logger.GetInstance().Fatal("An error occured while initializing the containerizer",
 				zap.Error(err),
@@ -48,11 +49,11 @@ var rootCmd = &cobra.Command{
 			zap.Reflect("hooks", hooks),
 		)
 		m := hook.NewManager(hooks)
-		m.RegisterHooks(&hook.ACLHook)
-		m.RegisterHooks(&hook.IptablesHook)
-		m.RegisterHooks(&hook.NetnsHook)
+		//m.RegisterHooks(&hook.ACLHook)
+		//m.RegisterHooks(&hook.IptablesHook)
+		//m.RegisterHooks(&hook.NetnsHook)
 		m.RegisterHooks(&hook.RemoveContainerHook)
-		m.RegisterHooks(&hook.NetworkHook)
+		//m.RegisterHooks(&hook.NetworkHook)
 
 		// Create and run the executor
 		config := config.Config{AgentEndpoint: agentEndpoint, ExecutorID: executorID, FrameworkID: frameworkID}
@@ -71,7 +72,7 @@ func init() {
 	cobra.OnInitialize(readConfig)
 
 	// Flags given by the agent when running th executor
-	rootCmd.PersistentFlags().StringVar(&dockerSocket, "docker_socket", "/var/run/docker.sock", "Docker socket path")
+	rootCmd.PersistentFlags().StringVar(&dockerSocket, "containerd_socket", "/run/containerd/containerd.sock", "Docker socket path")
 	rootCmd.PersistentFlags().StringVar(&logDir, "log_dir", "", "Location to put log files")
 	rootCmd.PersistentFlags().StringVar(&loggingLevel, "logging_level", "", "Logging level")
 
@@ -79,7 +80,7 @@ func init() {
 	rootCmd.PersistentFlags().Bool("debug", true, "Enable debug mode")
 	viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))
 
-	rootCmd.PersistentFlags().StringSlice("hooks", []string{"ddfd"}, "Enabled hooks")
+	rootCmd.PersistentFlags().StringSlice("hooks", []string{}, "Enabled hooks")
 	viper.BindPFlag("hooks", rootCmd.PersistentFlags().Lookup("hooks"))
 
 	rootCmd.PersistentFlags().String("proc_path", "/proc", "Proc mount path")

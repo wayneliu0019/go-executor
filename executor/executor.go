@@ -4,7 +4,6 @@ import (
 	"io"
 	"net/url"
 	"os"
-	"os/exec"
 	"os/signal"
 	"sync"
 	"syscall"
@@ -244,34 +243,35 @@ func (e *Executor) handleLaunch(ev *executor.Event) error {
 	//	return e.throwError(fmt.Errorf("error while running pre-create hooks: %v", err))
 	//}
 
-	logger.GetInstance().Info(fmt.Sprintf("pull images for containerd %v", info))
-	c1 := "ctr images pull docker.io/library/nginx:latest"
-	cmd := exec.Command("/bin/bash", "-c", c1)
-	_, errcommand := cmd.Output()
-	if errcommand != nil {
-		logger.GetInstance().Info(fmt.Sprintf("pull images error %v ", errcommand))
-		return errcommand
-	}
+	//logger.GetInstance().Info(fmt.Sprintf("pull images for containerd %v", info))
+	//c1 := "ctr images pull docker.io/library/nginx:latest"
+	//cmd := exec.Command("/bin/bash", "-c", c1)
+	//_, errcommand := cmd.Output()
+	//if errcommand != nil {
+	//	logger.GetInstance().Info(fmt.Sprintf("pull images error %v ", errcommand))
+	//	return errcommand
+	//}
+	//
+	//logger.GetInstance().Info("image pulled!")
+	//
+	//logger.GetInstance().Info("startup containerd container")
+	//c2 := "ctr run -d docker.io/library/nginx:latest myng"
+	//cmd2 := exec.Command("/bin/bash", "-c", c2)
+	//_, errr := cmd2.Output()
+	//if errr != nil {
+	//	logger.GetInstance().Info(fmt.Sprintf("run container error %v ", errr))
+	//	return errr
+	//}
+	//
+	//logger.GetInstance().Info("container created!")
 
-	logger.GetInstance().Info("image pulled!")
-
-	logger.GetInstance().Info("startup containerd container")
-	c2 := "ctr run -d docker.io/library/nginx:latest myng"
-	cmd2 := exec.Command("/bin/bash", "-c", c2)
-	_, errr := cmd2.Output()
-	if errr != nil {
-		logger.GetInstance().Info(fmt.Sprintf("run container error %v ", errr))
-		return errr
-	}
-
-	logger.GetInstance().Info("container created!")
 
 	// Create container
-	//containerID, err := e.Containerizer.ContainerCreate(info)
-	//if err != nil {
-	//	return e.throwError(fmt.Errorf("error while creating the container: %v", err))
-	//}
-	//e.ContainerID = containerID
+	containerID, err := e.Containerizer.ContainerCreate(info)
+	if err != nil {
+		return e.throwError(fmt.Errorf("error while creating the container: %v", err))
+	}
+	e.ContainerID = containerID
 
 
 
@@ -282,10 +282,10 @@ func (e *Executor) handleLaunch(ev *executor.Event) error {
 	//}
 
 	// Launch container
-	//err = e.Containerizer.ContainerRun(containerID)
-	//if err != nil {
-	//	return e.throwError(fmt.Errorf("error while starting the container: %v", err))
-	//}
+	err = e.Containerizer.ContainerRun(containerID)
+	if err != nil {
+		return e.throwError(fmt.Errorf("error while starting the container: %v", err))
+	}
 
 	// Run post-run hooks
 	//err = e.HookManager.RunPostRunHooks(e.Containerizer, &e.TaskInfo, &e.FrameworkInfo, e.ContainerID)
@@ -355,7 +355,7 @@ func (e *Executor) handleMessage(ev *executor.Event) error {
 	return nil
 }
 
-// handleShutdown kills all tasks before shuting down the executor
+// handleShutdown kills all tasks before shutting down the executor
 func (e *Executor) handleShutdown(ev *executor.Event) error {
 	logger.GetInstance().Info("Handled SHUTDOWN event")
 
@@ -487,16 +487,17 @@ func (e *Executor) tearDown() {
 	}
 
 	e.HookManager.RunPreStopHooks(e.Containerizer, &e.TaskInfo, &e.FrameworkInfo, e.ContainerID)
-	//e.Containerizer.ContainerStop(e.ContainerID)
 
-	logger.GetInstance().Info("stop container first")
-	c1 := "ctr task kill -s SIGKILL myng"
-	cmd := exec.Command("/bin/bash", "-c", c1)
-	_, errcommand := cmd.Output()
-	if errcommand != nil {
-		logger.GetInstance().Info(fmt.Sprintf("stop container error %v ", errcommand))
-		return
-	}
+	e.Containerizer.ContainerStop(e.ContainerID)
+
+	//logger.GetInstance().Info("stop container first")
+	//c1 := "ctr task kill -s SIGKILL myng"
+	//cmd := exec.Command("/bin/bash", "-c", c1)
+	//_, errcommand := cmd.Output()
+	//if errcommand != nil {
+	//	logger.GetInstance().Info(fmt.Sprintf("stop container error %v ", errcommand))
+	//	return
+	//}
 
 	//logger.GetInstance().Info("delete continerd container")
 	//c2 := "ctr c delete myng"
@@ -518,30 +519,25 @@ func (e *Executor) waitContainer() error {
 		zap.String("Task", e.TaskInfo.TaskID.GetValue()),
 	)
 
-	//code, err := e.Containerizer.ContainerWait(e.ContainerID)
-	//if err != nil {
-	//	logger.GetInstance().Error("Error while waiting for container to stop",
-	//		zap.String("Container", e.ContainerID),
-	//		zap.String("Task", e.TaskInfo.TaskID.GetValue()),
-	//		zap.Error(err),
-	//	)
+	code, err := e.Containerizer.ContainerWait(e.ContainerID)
+	if err != nil {
+		logger.GetInstance().Error("Error while waiting for container to stop",
+			zap.String("Container", e.ContainerID),
+			zap.String("Task", e.TaskInfo.TaskID.GetValue()),
+			zap.Error(err),
+		)
 
-	//	return e.throwError(fmt.Errorf("error while waiting for container to stop: %v", err))
-	//}
+		return e.throwError(fmt.Errorf("error while waiting for container to stop: %v", err))
+	}
 
-	//logger.GetInstance().Info("Container exited",
-	//	zap.Int("Code", code),
-	//	zap.String("Container", e.ContainerID),
-	//	zap.String("Task", e.TaskInfo.TaskID.GetValue()),
-	//)
+	logger.GetInstance().Info("Container exited",
+		zap.Int("Code", code),
+		zap.String("Container", e.ContainerID),
+		zap.String("Task", e.TaskInfo.TaskID.GetValue()),
+	)
 
-	//if code != 0 {
-	//	return e.throwError(fmt.Errorf("container exited (code %d)", code))
-	//}
-
-        for {
-            logger.GetInstance().Info("container wait process.....")
-            time.Sleep(10 * time.Second)
+	if code != 0 {
+		return e.throwError(fmt.Errorf("container exited (code %d)", code))
 	}
 
 	e.tearDown()
