@@ -44,6 +44,12 @@
 			"revisionTime": "2017-03-20T16:26:55Z"
 		},
 		{
+			"checksumSHA1": "ULTR7VP+JbpA3PZ1C8wf5DQJp2Y=",
+			"path": "github.com/containerd/containerd",
+			"revision": "7ad184331fa3e55e52b890ea95e65ba581ae3429",
+			"revisionTime": "2020-02-18T19:00:59Z"
+		},
+		{
 			"checksumSHA1": "rUC3Mcbmv8Xrp41d6S+IJWkD7tI=",
 			"path": "github.com/coreos/go-iptables/iptables",
 			"revision": "e1428ab78015bf1388229130b43d005e102da004",
@@ -618,5 +624,5 @@
 			"revisionTime": "2017-04-07T17:21:22Z"
 		}
 	],
-	"rootPath": "github.com/Devatoria/go-mesos-executor"
+	"rootPath": "go-mesos-executor"
 }

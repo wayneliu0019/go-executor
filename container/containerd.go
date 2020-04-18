@@ -6,10 +6,10 @@ import (
 	"net"
 	"syscall"
 
-	"go-mesos-executor/logger"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
+	"go-mesos-executor/logger"
 	"go.uber.org/zap"
 )
 
