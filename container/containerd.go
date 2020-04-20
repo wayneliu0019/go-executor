@@ -144,7 +144,7 @@ func (c *ContainerdContainerizer) ContainerStop(id string) error {
 		return err
 	}
 
-	logger.GetInstance().Info("task stop with status", zap.String("id", id), zap.Ints("status", int(code)))
+	logger.GetInstance().Info("task stop with status", zap.String("id", id), zap.Int("status", int(code)))
 
 	return nil
 }
