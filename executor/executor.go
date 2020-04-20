@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"fmt"
 	"io"
 	"net/url"
 	"os"
@@ -8,7 +9,6 @@ import (
 	"sync"
 	"syscall"
 	"time"
-	"fmt"
 
 	"github.com/spf13/viper"
 	"go-mesos-executor/container"

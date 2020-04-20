@@ -130,11 +130,21 @@ func (c *ContainerdContainerizer) ContainerStop(id string) error {
 		return err
 	}
 
+	exitStatusC, _ := task.Wait(ctx)
+
 	// kill the task first
 	if err := task.Kill(ctx, syscall.SIGTERM); err != nil {
 		logger.GetInstance().Error("kill task by id failed", zap.String("id", id), zap.Error(err))
 		return err
 	}
+
+	status := <-exitStatusC
+	code, _, err := status.Result()
+	if err != nil {
+		return err
+	}
+
+	logger.GetInstance().Info("task stop with status", zap.String("id", id), zap.Ints("status", code))
 
 	return nil
 }
