@@ -243,29 +243,6 @@ func (e *Executor) handleLaunch(ev *executor.Event) error {
 	//	return e.throwError(fmt.Errorf("error while running pre-create hooks: %v", err))
 	//}
 
-	//logger.GetInstance().Info(fmt.Sprintf("pull images for containerd %v", info))
-	//c1 := "ctr images pull docker.io/library/nginx:latest"
-	//cmd := exec.Command("/bin/bash", "-c", c1)
-	//_, errcommand := cmd.Output()
-	//if errcommand != nil {
-	//	logger.GetInstance().Info(fmt.Sprintf("pull images error %v ", errcommand))
-	//	return errcommand
-	//}
-	//
-	//logger.GetInstance().Info("image pulled!")
-	//
-	//logger.GetInstance().Info("startup containerd container")
-	//c2 := "ctr run -d docker.io/library/nginx:latest myng"
-	//cmd2 := exec.Command("/bin/bash", "-c", c2)
-	//_, errr := cmd2.Output()
-	//if errr != nil {
-	//	logger.GetInstance().Info(fmt.Sprintf("run container error %v ", errr))
-	//	return errr
-	//}
-	//
-	//logger.GetInstance().Info("container created!")
-
-
 	// Create container
 	containerID, err := e.Containerizer.ContainerCreate(info)
 	if err != nil {
@@ -486,27 +463,9 @@ func (e *Executor) tearDown() {
 		e.HealthChecker.Quit <- struct{}{}
 	}
 
-	e.HookManager.RunPreStopHooks(e.Containerizer, &e.TaskInfo, &e.FrameworkInfo, e.ContainerID)
+	//e.HookManager.RunPreStopHooks(e.Containerizer, &e.TaskInfo, &e.FrameworkInfo, e.ContainerID)
 
 	e.Containerizer.ContainerStop(e.ContainerID)
-
-	//logger.GetInstance().Info("stop container first")
-	//c1 := "ctr task kill -s SIGKILL myng"
-	//cmd := exec.Command("/bin/bash", "-c", c1)
-	//_, errcommand := cmd.Output()
-	//if errcommand != nil {
-	//	logger.GetInstance().Info(fmt.Sprintf("stop container error %v ", errcommand))
-	//	return
-	//}
-
-	//logger.GetInstance().Info("delete continerd container")
-	//c2 := "ctr c delete myng"
-	//cmd2 := exec.Command("/bin/bash", "-c", c2)
-	//_, errr := cmd2.Output()
-	//if errr != nil {
-	//	fmt.Println("delete container error %v ", errr)
-	//	return
-	//}
 
 	e.HookManager.RunPostStopHooks(e.Containerizer, &e.TaskInfo, &e.FrameworkInfo, e.ContainerID)
 }

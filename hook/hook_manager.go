@@ -101,22 +101,22 @@ func (m *Manager) RunPreCreateHooks(c container.Containerizer, taskInfo *mesos.T
 	return m.runHooks(preCreate, c, taskInfo, frameworkInfo, "", true)
 }
 
-// RunPreRunHooks runs all pre-create hooks of the given manager
+// RunPreRunHooks runs all pre-run hooks of the given manager
 func (m *Manager) RunPreRunHooks(c container.Containerizer, taskInfo *mesos.TaskInfo, frameworkInfo *mesos.FrameworkInfo, containerID string) error {
 	return m.runHooks(preRun, c, taskInfo, frameworkInfo, containerID, true)
 }
 
-// RunPostRunHooks runs all pre-create hooks of the given manager
+// RunPostRunHooks runs all post-create hooks of the given manager
 func (m *Manager) RunPostRunHooks(c container.Containerizer, taskInfo *mesos.TaskInfo, frameworkInfo *mesos.FrameworkInfo, containerID string) error {
 	return m.runHooks(postRun, c, taskInfo, frameworkInfo, containerID, true)
 }
 
-// RunPreStopHooks runs all pre-create hooks of the given manager
+// RunPreStopHooks runs all pre-stop hooks of the given manager
 func (m *Manager) RunPreStopHooks(c container.Containerizer, taskInfo *mesos.TaskInfo, frameworkInfo *mesos.FrameworkInfo, containerID string) error {
 	return m.runHooks(preStop, c, taskInfo, frameworkInfo, containerID, false)
 }
 
-// RunPostStopHooks runs all pre-create hooks of the given manager
+// RunPostStopHooks runs all post-stop hooks of the given manager
 func (m *Manager) RunPostStopHooks(c container.Containerizer, taskInfo *mesos.TaskInfo, frameworkInfo *mesos.FrameworkInfo, containerID string) error {
 	return m.runHooks(postStop, c, taskInfo, frameworkInfo, containerID, false)
 }
