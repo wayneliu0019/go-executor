@@ -2,7 +2,6 @@ package container
 
 import (
 	"context"
-	"fmt"
 	"github.com/containerd/containerd/cio"
 	"net"
 	"syscall"
@@ -122,19 +121,16 @@ func (c *ContainerdContainerizer) ContainerStop(id string) error {
 	container, err:= c.Client.LoadContainer(ctx, id)
 	if err != nil {
 		logger.GetInstance().Warn("get container from id failed", zap.String("id", id), zap.Error(err))
-		return  err
+		return  nil
 	}
 
 	task, err := container.Task(ctx, nil)
 	if err != nil {
 		logger.GetInstance().Warn("get task from id failed", zap.String("id", id), zap.Error(err))
-		return err
+		return nil
 	}
 
 	exitStatusC, _ := task.Wait(ctx)
-
-	beforestatus,_:=task.Status(ctx)
-	logger.GetInstance().Warn(fmt.Sprintf("before status is %v", beforestatus))
 
 	// kill the task first
 	if err := task.Kill(ctx, syscall.SIGTERM); err != nil {
@@ -148,14 +144,12 @@ func (c *ContainerdContainerizer) ContainerStop(id string) error {
 		return err
 	}
 
-	afterstatus,_:=task.Status(ctx)
-	logger.GetInstance().Warn(fmt.Sprintf("after status is %v", afterstatus))
-
 	logger.GetInstance().Info("task killed with status", zap.String("id", id), zap.Int("status", int(code)))
 
 	_, errt:=task.Delete(ctx)
 	if errt != nil {
-		logger.GetInstance().Error("task delete by failed", zap.String("id", id), zap.Error(errt))
+		logger.GetInstance().Error("task delete failed", zap.String("id", id), zap.Error(errt))
+		return errt
 	}
 
 	return nil
