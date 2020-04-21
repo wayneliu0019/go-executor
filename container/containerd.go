@@ -2,6 +2,7 @@ package container
 
 import (
 	"context"
+	"fmt"
 	"github.com/containerd/containerd/cio"
 	"net"
 	"syscall"
@@ -132,6 +133,9 @@ func (c *ContainerdContainerizer) ContainerStop(id string) error {
 
 	exitStatusC, _ := task.Wait(ctx)
 
+	beforestatus,_:=task.Status(ctx)
+	logger.GetInstance().Warn(fmt.Sprintf("before status is %v", beforestatus))
+
 	// kill the task first
 	if err := task.Kill(ctx, syscall.SIGTERM); err != nil {
 		logger.GetInstance().Error("kill task by id failed", zap.String("id", id), zap.Error(err))
@@ -144,7 +148,15 @@ func (c *ContainerdContainerizer) ContainerStop(id string) error {
 		return err
 	}
 
+	afterstatus,_:=task.Status(ctx)
+	logger.GetInstance().Warn(fmt.Sprintf("after status is %v", afterstatus))
+
 	logger.GetInstance().Info("task killed with status", zap.String("id", id), zap.Int("status", int(code)))
+
+	_, errt:=task.Delete(ctx)
+	if errt != nil {
+		logger.GetInstance().Error("task delete by failed", zap.String("id", id), zap.Error(errt))
+	}
 
 	return nil
 }
@@ -161,7 +173,7 @@ func (c *ContainerdContainerizer) ContainerRemove(id string) error {
 	}
 
 	//delete container
-	if err:= container.Delete(ctx, nil); err != nil {
+	if err:= container.Delete(ctx, containerd.WithSnapshotCleanup); err != nil {
 		logger.GetInstance().Error("delete container by id failed", zap.String("id", id), zap.Error(err))
 		return err
 	}
