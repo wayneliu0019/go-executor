@@ -470,8 +470,7 @@ func (e *Executor) tearDown() {
 	e.HookManager.RunPostStopHooks(e.Containerizer, &e.TaskInfo, &e.FrameworkInfo, e.ContainerID)
 }
 
-// waitContainer waits for the executor container to stop,
-// making the associated task to teardown
+// waits for the executor container to stop, making the associated task to teardown
 func (e *Executor) waitContainer() error {
 	logger.GetInstance().Info("Waiting for container to finish",
 		zap.String("Container", e.ContainerID),
@@ -480,13 +479,13 @@ func (e *Executor) waitContainer() error {
 
 	code, err := e.Containerizer.ContainerWait(e.ContainerID)
 	if err != nil {
-		logger.GetInstance().Error("Error while waiting for container to stop",
+		logger.GetInstance().Error("Error while waiting for container to finish",
 			zap.String("Container", e.ContainerID),
 			zap.String("Task", e.TaskInfo.TaskID.GetValue()),
 			zap.Error(err),
 		)
 
-		return e.throwError(fmt.Errorf("error while waiting for container to stop: %v", err))
+		return e.throwError(fmt.Errorf("error while waiting for container to finish: %v", err))
 	}
 
 	logger.GetInstance().Info("Container exited",
@@ -495,15 +494,21 @@ func (e *Executor) waitContainer() error {
 		zap.String("Task", e.TaskInfo.TaskID.GetValue()),
 	)
 
-	if code != 0 {
+
+	if code == 137{  //137 is KILL event with syscall.SIGKILL
+		return nil
+	}else if code == 0 { // 0 is task complete
+
+		e.tearDown()
+		status := e.newStatus()
+		status.State = mesos.TASK_FINISHED.Enum()
+
+		return e.updateStatus(status)
+	}else { //task failed with some error
 		return e.throwError(fmt.Errorf("container exited (code %d)", code))
 	}
 
-	e.tearDown()
-	status := e.newStatus()
-	status.State = mesos.TASK_FINISHED.Enum()
 
-	return e.updateStatus(status)
 }
 
 // handleStopSignals handles stop signals such as SIGINT or SIGTERM

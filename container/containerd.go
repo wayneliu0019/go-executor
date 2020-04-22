@@ -133,7 +133,7 @@ func (c *ContainerdContainerizer) ContainerStop(id string) error {
 	exitStatusC, _ := task.Wait(ctx)
 
 	// kill the task first
-	if err := task.Kill(ctx, syscall.SIGTERM); err != nil {
+	if err := task.Kill(ctx, syscall.SIGKILL); err != nil {
 		logger.GetInstance().Error("kill task by id failed", zap.String("id", id), zap.Error(err))
 		return err
 	}
@@ -151,6 +151,8 @@ func (c *ContainerdContainerizer) ContainerStop(id string) error {
 		logger.GetInstance().Error("task delete failed", zap.String("id", id), zap.Error(errt))
 		return errt
 	}
+
+	logger.GetInstance().Info("task deleted ", zap.String("id", id))
 
 	return nil
 }
@@ -171,6 +173,8 @@ func (c *ContainerdContainerizer) ContainerRemove(id string) error {
 		logger.GetInstance().Error("delete container by id failed", zap.String("id", id), zap.Error(err))
 		return err
 	}
+
+	logger.GetInstance().Info("container deleted ", zap.String("id", id))
 	return nil
 }
 
