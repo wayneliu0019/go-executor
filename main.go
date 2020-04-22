@@ -17,7 +17,9 @@ import (
 
 var (
 	agentEndpoint           string
-	dockerSocket            string
+	containerdSocket        string
+	namespace               string
+	image                   string
 	executorID              string
 	frameworkID             string
 	logDir                  string
@@ -31,12 +33,11 @@ var rootCmd = &cobra.Command{
 		logger.GetInstance().Info("Initializing the executor",
 			zap.String("executorID", executorID),
 			zap.String("frameworkID", frameworkID),
-                        zap.String("agentEndpoint", agentEndpoint),
+			zap.String("agentEndpoint", agentEndpoint),
 		)
 
-		// Prepare docker containerizer
-		//c, err := container.NewDockerContainerizer(dockerSocket)
-		c, err := container.NewContainerdContainerizer(dockerSocket)
+		// Prepare containerd containerizer
+		c, err := container.NewContainerdContainerizer(containerdSocket, image, namespace)
 		if err != nil {
 			logger.GetInstance().Fatal("An error occured while initializing the containerizer",
 				zap.Error(err),
@@ -72,14 +73,12 @@ func init() {
 	cobra.OnInitialize(readConfig)
 
 	// Flags given by the agent when running th executor
-	rootCmd.PersistentFlags().StringVar(&dockerSocket, "containerd_socket", "/run/containerd/containerd.sock", "Docker socket path")
+	rootCmd.PersistentFlags().StringVar(&containerdSocket, "containerd_socket", "/run/containerd/containerd.sock", "Containerd socket path")
+	rootCmd.PersistentFlags().StringVar(&namespace, "namespace", "default", "Containerd namespace that will be used ")
+	rootCmd.PersistentFlags().StringVar(&image, "image", "", "Image that will be used to create container")
 	rootCmd.PersistentFlags().StringVar(&logDir, "log_dir", "", "Location to put log files")
-	rootCmd.PersistentFlags().StringVar(&loggingLevel, "logging_level", "", "Logging level")
 
 	// Custom flags
-	rootCmd.PersistentFlags().Bool("debug", true, "Enable debug mode")
-	viper.BindPFlag("debug", rootCmd.PersistentFlags().Lookup("debug"))
-
 	rootCmd.PersistentFlags().StringSlice("hooks", []string{}, "Enabled hooks")
 	viper.BindPFlag("hooks", rootCmd.PersistentFlags().Lookup("hooks"))
 

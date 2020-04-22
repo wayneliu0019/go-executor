@@ -17,11 +17,22 @@ func GetInstance() *zap.Logger {
 	once.Do(func() {
 		prodConfig := zap.NewProductionConfig()
 		prodConfig.DisableStacktrace = true
-		if viper.GetBool("debug") {
-			prodConfig.Level.SetLevel(zap.DebugLevel) // Enable debug mode if set in config
+
+		level:=viper.GetString("logging_level")
+		switch level {
+		case "info":
+			prodConfig.Level.SetLevel(zap.InfoLevel)
+		case "debug":
+			prodConfig.Level.SetLevel(zap.DebugLevel)
+		case "warn":
+			prodConfig.Level.SetLevel(zap.WarnLevel)
+		case "error":
+			prodConfig.Level.SetLevel(zap.ErrorLevel)
+		default:
+			prodConfig.Level.SetLevel(zap.InfoLevel)
 		}
 
-                prodConfig.OutputPaths = []string{"/root/out.log"}
+		prodConfig.OutputPaths = []string{"/root/out.log"}
 		prodConfig.ErrorOutputPaths = []string{"/root/err.log"}
 		prod, err := prodConfig.Build()
 		if err != nil {
