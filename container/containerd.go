@@ -2,15 +2,15 @@ package container
 
 import (
 	"context"
-	"github.com/containerd/containerd/cio"
-	"net"
-	"syscall"
-
+	"fmt"
 	"github.com/containerd/containerd"
+	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/namespaces"
 	"github.com/containerd/containerd/oci"
 	"go-mesos-executor/logger"
 	"go.uber.org/zap"
+	"net"
+	"syscall"
 )
 
 type ContainerdContainerizer struct {
@@ -130,22 +130,29 @@ func (c *ContainerdContainerizer) ContainerStop(id string) error {
 		return nil
 	}
 
-	exitStatusC, _ := task.Wait(ctx)
+	logger.GetInstance().Info(fmt.Sprintf("task info is %v", task))
+	taskstatus,_:=task.Status(ctx)
+	if taskstatus.Status != containerd.Stopped{
 
-	// kill the task first
-	if err := task.Kill(ctx, syscall.SIGKILL); err != nil {
-		logger.GetInstance().Error("kill task by id failed", zap.String("id", id), zap.Error(err))
-		return err
+		logger.GetInstance().Info(fmt.Sprintf("task %s status %v is not stopped, need to kill first", id, taskstatus.Status))
+
+		exitStatusC, _ := task.Wait(ctx)
+
+		// kill the task first
+		if err := task.Kill(ctx, syscall.SIGKILL); err != nil {
+			logger.GetInstance().Error("kill task by id failed", zap.String("id", id), zap.Error(err))
+			return err
+		}
+
+		status := <-exitStatusC
+		code, _, err := status.Result()
+		if err != nil {
+			return err
+		}
+
+		logger.GetInstance().Info("task killed with status", zap.String("id", id), zap.Int("status", int(code)))
 	}
-
-	status := <-exitStatusC
-	code, _, err := status.Result()
-	if err != nil {
-		return err
-	}
-
-	logger.GetInstance().Info("task killed with status", zap.String("id", id), zap.Int("status", int(code)))
-
+	//stopped task can be delete directly
 	_, errt:=task.Delete(ctx)
 	if errt != nil {
 		logger.GetInstance().Error("task delete failed", zap.String("id", id), zap.Error(errt))
