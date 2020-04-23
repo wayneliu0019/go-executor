@@ -49,33 +49,15 @@ func (c *ContainerdContainerizer) ContainerCreate(info Info) (string, error){
 			return "", err
 		}
 	}
-
-
-	//memorylimit := int64(info.MemoryLimit *1024 * 1024)
-	//cpushare := info.CPUSharesLimit * 1024
-	//resources := func(_ context.Context, _ oci.Client, _ *containers.Container, s *specs.Spec) error {
-	//	s.Linux.Resources.Memory = &specs.LinuxMemory{
-	//		Limit: &memorylimit,
-	//	}
-	//	s.Linux.Resources.CPU = &specs.LinuxCPU{
-	//		Shares: &cpushare,
-	//	}
-	//	return nil
-	//}
-
-	//container, err := c.Client.NewContainer(
-	//	ctx,
-	//	id,
-	//	containerd.WithImage(image),
-	//	containerd.WithNewSnapshot(id, image),
-	//	containerd.WithNewSpec(oci.WithImageConfig(image), resources),
-	//)
+	
+	memorylimit := uint64(info.MemoryLimit *1024 * 1024)
+	cpushare := uint64(info.CPUSharesLimit * 1024)
 
 	containerOpts :=[]containerd.NewContainerOpts{}
 	if image != nil {
 		containerOpts= append(containerOpts, containerd.WithImage(image))
 		containerOpts = append(containerOpts, containerd.WithNewSnapshot(id, image))
-		containerOpts = append(containerOpts, containerd.WithNewSpec(oci.WithImageConfig(image)))
+		containerOpts = append(containerOpts, containerd.WithNewSpec(oci.WithImageConfig(image), oci.WithMemoryLimit(memorylimit), oci.WithCPUShares(cpushare)))
 	}
 
 	// create a container
