@@ -18,17 +18,18 @@ type ContainerdContainerizer struct {
 
 	Image string
 	Namespace string
+	Command string
 
 }
 
 
-func NewContainerdContainerizer(socket, image, namespace  string) (*ContainerdContainerizer, error) {
+func NewContainerdContainerizer(socket, image, namespace, command  string) (*ContainerdContainerizer, error) {
 	client, err := containerd.New(socket)
 	if err != nil {
 		return nil, err
 	}
 
-	return &ContainerdContainerizer{Client: client, Image: image, Namespace: namespace}, nil
+	return &ContainerdContainerizer{Client: client, Image: image, Namespace: namespace, Command: command}, nil
 }
 
 
@@ -49,25 +50,40 @@ func (c *ContainerdContainerizer) ContainerCreate(info Info) (string, error){
 			return "", err
 		}
 	}
-	
-	memorylimit := uint64(info.MemoryLimit *1024 * 1024)
-	cpushare := uint64(info.CPUSharesLimit * 1024)
+
+	specOpts := []oci.SpecOpts{}
+
+	//handle command
+	if len(c.Command) >0 {
+		logger.GetInstance().Info("command is ", zap.String("command", c.Command))
+		specOpts = append(specOpts, oci.WithProcessArgs("sh", "-c", c.Command))
+	}
+
+	//handle resources
+	memorylimit := uint64(info.MemoryLimit)
+	cpushare := uint64(info.CPUSharesLimit)
+	specOpts = append(specOpts, oci.WithMemoryLimit(memorylimit))
+	specOpts = append(specOpts, oci.WithCPUShares(cpushare))
+
 
 	containerOpts :=[]containerd.NewContainerOpts{}
 	if image != nil {
+
+		specOpts= append(specOpts, oci.WithImageConfig(image))
+
 		containerOpts= append(containerOpts, containerd.WithImage(image))
 		containerOpts = append(containerOpts, containerd.WithNewSnapshot(id, image))
-		containerOpts = append(containerOpts, containerd.WithNewSpec(oci.WithImageConfig(image), oci.WithMemoryLimit(memorylimit), oci.WithCPUShares(cpushare)))
+		containerOpts = append(containerOpts, containerd.WithNewSpec(specOpts ... ))
+	}else{
+		containerOpts = append(containerOpts, containerd.WithNewSpec(specOpts ... ))
 	}
+
 
 	// create a container
 	container, err := c.Client.NewContainer(
 		ctx,
 		id,
 		containerOpts ...
-		//containerd.WithImage(image),
-		//containerd.WithNewSnapshot(id, image),
-		//containerd.WithNewSpec(oci.WithImageConfig(image)),
 	)
 
 	if err != nil {

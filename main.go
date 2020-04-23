@@ -20,6 +20,7 @@ var (
 	containerdSocket        string
 	namespace               string
 	image                   string
+	command                 string
 	executorID              string
 	frameworkID             string
 	logDir                  string
@@ -37,7 +38,7 @@ var rootCmd = &cobra.Command{
 		)
 
 		// Prepare containerd containerizer
-		c, err := container.NewContainerdContainerizer(containerdSocket, image, namespace)
+		c, err := container.NewContainerdContainerizer(containerdSocket, image, namespace, command)
 		if err != nil {
 			logger.GetInstance().Fatal("An error occured while initializing the containerizer",
 				zap.Error(err),
@@ -76,6 +77,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&containerdSocket, "containerd_socket", "/run/containerd/containerd.sock", "Containerd socket path")
 	rootCmd.PersistentFlags().StringVar(&namespace, "namespace", "default", "Containerd namespace that will be used ")
 	rootCmd.PersistentFlags().StringVar(&image, "image", "", "Image that will be used to create container")
+	rootCmd.PersistentFlags().StringVar(&command, "command", "", "The command that will be executed after container startup")
 	rootCmd.PersistentFlags().StringVar(&logDir, "log_dir", "", "Location to put log files")
 
 	// Custom flags
