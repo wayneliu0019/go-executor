@@ -16,20 +16,19 @@ import (
 )
 
 var (
-	agentEndpoint           string
 	containerdSocket        string
 	namespace               string
 	image                   string
 	command                 string
+
 	executorID              string
 	frameworkID             string
-	logDir                  string
-	loggingLevel            string
+	agentEndpoint           string
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "mesos-docker-executor",
-	Short: "Custom Mesos Docker executor",
+	Use:   "mesos-containerd-executor",
+	Short: "Custom Mesos Containerd executor",
 	Run: func(cmd *cobra.Command, args []string) {
 		logger.GetInstance().Info("Initializing the executor",
 			zap.String("executorID", executorID),
@@ -40,7 +39,7 @@ var rootCmd = &cobra.Command{
 		// Prepare containerd containerizer
 		c, err := container.NewContainerdContainerizer(containerdSocket, image, namespace, command)
 		if err != nil {
-			logger.GetInstance().Fatal("An error occured while initializing the containerizer",
+			logger.GetInstance().Fatal("An error occurred while initializing the containerizer",
 				zap.Error(err),
 			)
 		}
@@ -62,8 +61,7 @@ var rootCmd = &cobra.Command{
 		e := executor.NewExecutor(config, c, m)
 
 		if err := e.Execute(); err != nil {
-			fmt.Println("An error occured while running the executor, %v", err)
-			logger.GetInstance().Fatal("An error occured while running the executor",
+			logger.GetInstance().Fatal("An error occurred while running the executor",
 				zap.Error(err),
 			)
 		}
@@ -71,6 +69,7 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
+	//the readConfig function will not be ran directly, it will be invoked when execute "cmd.Excute"
 	cobra.OnInitialize(readConfig)
 
 	// Flags given by the agent when running th executor
@@ -78,14 +77,10 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&namespace, "namespace", "default", "Containerd namespace that will be used ")
 	rootCmd.PersistentFlags().StringVar(&image, "image", "", "Image that will be used to create container")
 	rootCmd.PersistentFlags().StringVar(&command, "command", "", "The command that will be executed after container startup")
-	rootCmd.PersistentFlags().StringVar(&logDir, "log_dir", "", "Location to put log files")
 
 	// Custom flags
 	rootCmd.PersistentFlags().StringSlice("hooks", []string{}, "Enabled hooks")
 	viper.BindPFlag("hooks", rootCmd.PersistentFlags().Lookup("hooks"))
-
-	rootCmd.PersistentFlags().String("proc_path", "/proc", "Proc mount path")
-	viper.BindPFlag("proc_path", rootCmd.PersistentFlags().Lookup("proc_path"))
 
 	rootCmd.PersistentFlags().Duration("registering_retry", 100*time.Millisecond, "Executor registering delay in duration")
 	viper.BindPFlag("registering_retry", rootCmd.PersistentFlags().Lookup("registering_retry"))
@@ -95,12 +90,10 @@ func init() {
 	viper.SetDefault("iptables.ip_forwarding", true)
 	viper.SetDefault("iptables.ip_masquerading", true)
 
-	hooks := viper.GetStringSlice("hooks")
-	logger.GetInstance().Info(fmt.Sprintf("at the end of init, hooks are %v", hooks))
-
 }
 
 func readConfig() {
+
 	viper.SetEnvPrefix("mesos")
 	viper.SetConfigName("config")
 	viper.AddConfigPath(".")
@@ -127,7 +120,7 @@ func readConfig() {
 
 func main() {
 	if err := rootCmd.Execute(); err != nil {
-		logger.GetInstance().Fatal("An error occured while running the root command",
+		logger.GetInstance().Fatal("An error occurred while running the root command",
 			zap.Error(err),
 		)
 	}

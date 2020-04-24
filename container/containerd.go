@@ -2,8 +2,8 @@ package container
 
 import (
 	"context"
-	"fmt"
 	"errors"
+	"fmt"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/namespaces"
@@ -192,6 +192,7 @@ func (c *ContainerdContainerizer) ContainerStop(id string) error {
 
 		logger.GetInstance().Info("task killed with status", zap.String("id", id), zap.Int("status", int(code)))
 	}
+
 	//stopped task can be delete directly
 	_, errt:=task.Delete(ctx)
 	if errt != nil {

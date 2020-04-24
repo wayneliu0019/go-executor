@@ -1,11 +1,12 @@
 logging_level: info
+log_dir: /root
 hooks: # Enabled hooks
   - removeContainer
   - netns
   - network
   - iptables
   - acl
-proc_path: /mnt/proc # Mount path of host proc folder
+proc_path: /proc # Mount path of host proc folder
 registering_retry: 100ms # Time to wait before two registering retry
 iptables:
   chains:

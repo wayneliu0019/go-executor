@@ -188,7 +188,7 @@ func (e *Executor) Execute() error {
 	}
 
 	// Now, executor is shutting down (every tasks have been killed)
-	logger.GetInstance().Info("All tasks have been killed. Now exiting, bye bye.")
+	logger.GetInstance().Info("All tasks have been killed. Now exiting current executor.")
 
 	return nil
 }

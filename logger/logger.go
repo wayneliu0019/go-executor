@@ -32,8 +32,13 @@ func GetInstance() *zap.Logger {
 			prodConfig.Level.SetLevel(zap.InfoLevel)
 		}
 
-		prodConfig.OutputPaths = []string{"/root/out.log"}
-		prodConfig.ErrorOutputPaths = []string{"/root/err.log"}
+		log_dir := viper.GetString("log_dir")
+		if len(log_dir) <=0 {
+			log_dir = "/root"
+		}
+		prodConfig.OutputPaths = []string{log_dir+"/out.log"}
+		prodConfig.ErrorOutputPaths = []string{log_dir+"/err.log"}
+
 		prod, err := prodConfig.Build()
 		if err != nil {
 			log.Fatalf("Error while initializing production logger: %v", err)
