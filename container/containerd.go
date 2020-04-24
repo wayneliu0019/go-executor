@@ -3,6 +3,7 @@ package container
 import (
 	"context"
 	"fmt"
+	"errors"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
 	"github.com/containerd/containerd/namespaces"
@@ -29,6 +30,11 @@ func NewContainerdContainerizer(socket, image, namespace, command  string) (*Con
 		return nil, err
 	}
 
+	if len(image) <=0 {
+		logger.GetInstance().Error("image must be specified!")
+		return nil, errors.New("image should not be null")
+	}
+
 	return &ContainerdContainerizer{Client: client, Image: image, Namespace: namespace, Command: command}, nil
 }
 
@@ -53,16 +59,7 @@ func (c *ContainerdContainerizer) ContainerCreate(info Info) (string, error){
 
 	specOpts := []oci.SpecOpts{}
 
-	containerOpts :=[]containerd.NewContainerOpts{}
-	if image != nil {
-
-		specOpts= append(specOpts, oci.WithImageConfig(image)) //image must be first elem here！！
-
-		containerOpts = append(containerOpts, containerd.WithNewSnapshot(id, image))
-		containerOpts = append(containerOpts, containerd.WithNewSpec(specOpts ... ))
-	}else{
-		containerOpts = append(containerOpts, containerd.WithNewSpec(specOpts ... ))
-	}
+	specOpts= append(specOpts, oci.WithImageConfig(image)) //image must be first elem here！！
 
 	//handle command
 	if len(c.Command) >0 {
@@ -75,14 +72,19 @@ func (c *ContainerdContainerizer) ContainerCreate(info Info) (string, error){
 	cpushare := uint64(info.CPUSharesLimit)
 	specOpts = append(specOpts, oci.WithMemoryLimit(memorylimit))
 	specOpts = append(specOpts, oci.WithCPUShares(cpushare))
-	
-	logger.GetInstance().Info(fmt.Sprintf("containeropts is %v", containerOpts))
+
+
+	containerOpts :=[]containerd.NewContainerOpts{}
+
+	containerOpts = append(containerOpts, containerd.WithNewSnapshot(id, image))
+	containerOpts = append(containerOpts, containerd.WithNewSpec(specOpts ... ))
+
 
 	// create a container
 	container, err := c.Client.NewContainer(
 		ctx,
 		id,
-		containerOpts ...
+		containerOpts ... ,
 	)
 
 	if err != nil {
