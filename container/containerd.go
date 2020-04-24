@@ -53,6 +53,17 @@ func (c *ContainerdContainerizer) ContainerCreate(info Info) (string, error){
 
 	specOpts := []oci.SpecOpts{}
 
+	containerOpts :=[]containerd.NewContainerOpts{}
+	if image != nil {
+
+		specOpts= append(specOpts, oci.WithImageConfig(image)) //image must be first elem here！！
+
+		containerOpts = append(containerOpts, containerd.WithNewSnapshot(id, image))
+		containerOpts = append(containerOpts, containerd.WithNewSpec(specOpts ... ))
+	}else{
+		containerOpts = append(containerOpts, containerd.WithNewSpec(specOpts ... ))
+	}
+
 	//handle command
 	if len(c.Command) >0 {
 		logger.GetInstance().Info("command is ", zap.String("command", c.Command))
@@ -64,20 +75,8 @@ func (c *ContainerdContainerizer) ContainerCreate(info Info) (string, error){
 	cpushare := uint64(info.CPUSharesLimit)
 	specOpts = append(specOpts, oci.WithMemoryLimit(memorylimit))
 	specOpts = append(specOpts, oci.WithCPUShares(cpushare))
-
-
-	containerOpts :=[]containerd.NewContainerOpts{}
-	if image != nil {
-
-		specOpts= append(specOpts, oci.WithImageConfig(image))
-
-		containerOpts= append(containerOpts, containerd.WithImage(image))
-		containerOpts = append(containerOpts, containerd.WithNewSnapshot(id, image))
-		containerOpts = append(containerOpts, containerd.WithNewSpec(specOpts ... ))
-	}else{
-		containerOpts = append(containerOpts, containerd.WithNewSpec(specOpts ... ))
-	}
-
+	
+	logger.GetInstance().Info(fmt.Sprintf("containeropts is %v", containerOpts))
 
 	// create a container
 	container, err := c.Client.NewContainer(
