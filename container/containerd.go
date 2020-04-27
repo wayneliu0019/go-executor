@@ -44,7 +44,7 @@ func (c *ContainerdContainerizer) ContainerCreate(info Info) (string, error){
 	// create a new context with namespace
 	ctx := namespaces.WithNamespace(context.Background(), c.Namespace)
 
-	id:=info.Name
+	id:=info.TaskInfo.TaskID.Value
 
 	var image containerd.Image
 	var err error
