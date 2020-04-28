@@ -1,7 +1,7 @@
 package logger
 
 import (
-	"log"
+	"fmt"
 	"sync"
 
 	"github.com/spf13/viper"
@@ -41,7 +41,7 @@ func GetInstance() *zap.Logger {
 
 		prod, err := prodConfig.Build()
 		if err != nil {
-			log.Fatalf("Error while initializing production logger: %v", err)
+			fmt.Println("Error while initializing production logger: %v", err)
 		}
 
 		instance = prod

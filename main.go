@@ -108,13 +108,8 @@ func readConfig() {
 	frameworkID = viper.GetString("framework_id")
 
 	if err := viper.ReadInConfig(); err != nil {
-		logger.GetInstance().Fatal("An error occured while reading the configuration file",
-			zap.Error(err),
-		)
+		fmt.Println("An error occured while reading the configuration file %v", err)
 	}
-
-	hooks := viper.GetStringSlice("hooks")
-	logger.GetInstance().Info(fmt.Sprintf("readInConfig, hooks are %v", hooks))
 
 }
 

@@ -2,7 +2,6 @@ package container
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
@@ -30,14 +29,25 @@ func NewContainerdContainerizer(socket, image, namespace, command  string) (*Con
 		return nil, err
 	}
 
-	if len(image) <=0 {
-		logger.GetInstance().Error("image must be specified!")
-		return nil, errors.New("image should not be null")
-	}
-
 	return &ContainerdContainerizer{Client: client, Image: image, Namespace: namespace, Command: command}, nil
 }
 
+func (c *ContainerdContainerizer) getImage(info Info) string{
+	if len(c.Image) >0{
+		return c.Image
+	}
+
+	containerinfo:=info.TaskInfo.GetContainer()
+	if containerinfo != nil {
+		dockerinfo:=containerinfo.GetDocker()
+		if dockerinfo != nil {
+			return dockerinfo.GetImage()
+		}
+	}
+	logger.GetInstance().Info("can not found image!")
+    return ""
+
+}
 
 func (c *ContainerdContainerizer) ContainerCreate(info Info) (string, error){
 
@@ -46,11 +56,14 @@ func (c *ContainerdContainerizer) ContainerCreate(info Info) (string, error){
 
 	id:=info.TaskInfo.TaskID.Value
 
-	var image containerd.Image
+	//get images from cli or taskinfo  (from docker type for now)
+	image:= c.getImage(info)
+
+	var userImage containerd.Image
 	var err error
 	// pull the image
-	if len(c.Image) > 0 {
-		image, err = c.Client.Pull(ctx, c.Image, containerd.WithPullUnpack)
+	if len(image) > 0 {
+		userImage, err = c.Client.Pull(ctx, image, containerd.WithPullUnpack)
 		if err != nil {
 			logger.GetInstance().Error("pull images failed", zap.Error(err))
 			return "", err
@@ -59,7 +72,7 @@ func (c *ContainerdContainerizer) ContainerCreate(info Info) (string, error){
 
 	specOpts := []oci.SpecOpts{}
 
-	specOpts= append(specOpts, oci.WithImageConfig(image)) //image must be first elem here！！
+	specOpts= append(specOpts, oci.WithImageConfig(userImage)) //image must be first elem here！！
 
 	//handle command
 	if len(c.Command) >0 {
@@ -76,7 +89,7 @@ func (c *ContainerdContainerizer) ContainerCreate(info Info) (string, error){
 
 	containerOpts :=[]containerd.NewContainerOpts{}
 
-	containerOpts = append(containerOpts, containerd.WithNewSnapshot(id, image))
+	containerOpts = append(containerOpts, containerd.WithNewSnapshot(id, userImage))
 	containerOpts = append(containerOpts, containerd.WithNewSpec(specOpts ... ))
 
 
