@@ -33,11 +33,12 @@ func GetInstance() *zap.Logger {
 		}
 
 		log_dir := viper.GetString("log_dir")
-		if len(log_dir) > 0 {
-			prodConfig.OutputPaths = []string{log_dir+"/stdout"}
-			prodConfig.ErrorOutputPaths = []string{log_dir+"/stderr"}
+		if len(log_dir) <=0 {
+			log_dir = "./"
 		}
 
+		prodConfig.OutputPaths = []string{log_dir+"/exec.out"}
+		prodConfig.ErrorOutputPaths = []string{log_dir+"/exec.err"}
 
 		prod, err := prodConfig.Build()
 		if err != nil {
