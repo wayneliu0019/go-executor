@@ -1,5 +1,5 @@
 logging_level: info
-log_dir: /root
+#log_dir: /root
 hooks: # Enabled hooks
   - removeContainer
   - netns
