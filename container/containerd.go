@@ -2,6 +2,7 @@ package container
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/cio"
@@ -39,9 +40,15 @@ func (c *ContainerdContainerizer) getImage(info Info) string{
 
 	containerinfo:=info.TaskInfo.GetContainer()
 	if containerinfo != nil {
-		dockerinfo:=containerinfo.GetDocker()
-		if dockerinfo != nil {
-			return dockerinfo.GetImage()
+		mesosobj:=containerinfo.GetMesos()
+		if mesosobj != nil {
+			imageobj:= mesosobj.GetImage()
+			if imageobj != nil {
+				dockerobj := imageobj.GetDocker()
+				if dockerobj != nil {
+					return dockerobj.GetName()
+				}
+			}
 		}
 	}
 	logger.GetInstance().Info("can not found image!")
@@ -68,6 +75,11 @@ func (c *ContainerdContainerizer) ContainerCreate(info Info) (string, error){
 			logger.GetInstance().Error("pull images failed", zap.Error(err))
 			return "", err
 		}
+	}
+
+	if userImage == nil {
+		logger.GetInstance().Info("not specify image!")
+		return "", errors.New("not specify image")
 	}
 
 	specOpts := []oci.SpecOpts{}
